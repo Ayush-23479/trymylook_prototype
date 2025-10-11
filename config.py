@@ -5,31 +5,25 @@ Contains all product shades, constants, and settings
 
 import numpy as np
 
-# ============================================================================
-# APPLICATION SETTINGS
-# ============================================================================
 
 APP_TITLE = "✨ Trymylook - Virtual Makeup Try-On"
 APP_ICON = "💄"
-VERSION = "1.0.0"
+VERSION = "2.0.0"
 
-# Image processing settings
-MAX_IMAGE_SIZE = (1920, 1920)  # Max width, height
-MIN_IMAGE_SIZE = (400, 400)    # Min width, height
 
-# Detection settings
+MAX_IMAGE_SIZE = (1920, 1920)
+MIN_IMAGE_SIZE = (400, 400)
+
+
 HAAR_SCALE_FACTOR = 1.1
 HAAR_MIN_NEIGHBORS = 5
 HAAR_MIN_SIZE = (30, 30)
 
-# Blending settings
+
 DEFAULT_INTENSITY = 60
 MIN_INTENSITY = 0
 MAX_INTENSITY = 100
 
-# ============================================================================
-# PRODUCT SHADE DEFINITIONS (RGB VALUES)
-# ============================================================================
 
 LIPSTICK_SHADES = {
     "Classic Red": (220, 20, 60),
@@ -59,23 +53,16 @@ FOUNDATION_SHADES = {
     "Olive Undertone": (195, 176, 145),
 }
 
-# Product categories
+
 PRODUCTS = ["Lipstick", "Eyeshadow", "Foundation"]
 
-# ============================================================================
-# OPENCV CASCADE PATHS (built into opencv-python)
-# ============================================================================
 
 CASCADE_FACE = "haarcascade_frontalface_default.xml"
 CASCADE_EYE = "haarcascade_eye.xml"
 CASCADE_MOUTH = "haarcascade_smile.xml"
 
-# ============================================================================
-# HELPER FUNCTIONS
-# ============================================================================
 
 def get_shades_for_product(product_name):
-    """Get available shades for a given product"""
     if product_name == "Lipstick":
         return LIPSTICK_SHADES
     elif product_name == "Eyeshadow":
@@ -85,10 +72,91 @@ def get_shades_for_product(product_name):
     else:
         return {}
 
+
 def rgb_to_bgr(rgb_tuple):
-    """Convert RGB to BGR for OpenCV"""
     return (rgb_tuple[2], rgb_tuple[1], rgb_tuple[0])
 
+
 def bgr_to_rgb(bgr_tuple):
-    """Convert BGR to RGB for display"""
     return (bgr_tuple[2], bgr_tuple[1], bgr_tuple[0])
+
+
+def get_all_products():
+    return PRODUCTS
+
+
+def get_total_shades():
+    return len(LIPSTICK_SHADES) + len(EYESHADOW_SHADES) + len(FOUNDATION_SHADES)
+
+
+def get_product_info(product_name):
+    shades = get_shades_for_product(product_name)
+    return {
+        'name': product_name,
+        'shades': list(shades.keys()),
+        'shade_count': len(shades),
+        'colors': list(shades.values())
+    }
+
+
+def validate_product(product_name):
+    return product_name in PRODUCTS
+
+
+def validate_shade(product_name, shade_name):
+    shades = get_shades_for_product(product_name)
+    return shade_name in shades
+
+
+if __name__ == "__main__":
+    print("=" * 70)
+    print("CONFIG MODULE - STANDALONE TEST")
+    print("=" * 70)
+    
+    print(f"\n📦 Application: {APP_TITLE}")
+    print(f"   Version: {VERSION}")
+    print(f"   Icon: {APP_ICON}")
+    
+    print(f"\n🎨 Available Products: {len(PRODUCTS)}")
+    for product in PRODUCTS:
+        info = get_product_info(product)
+        print(f"   • {product}: {info['shade_count']} shades")
+    
+    print(f"\n💄 Lipstick Shades ({len(LIPSTICK_SHADES)}):")
+    for shade, rgb in LIPSTICK_SHADES.items():
+        print(f"   • {shade}: RGB{rgb}")
+    
+    print(f"\n👁️  Eyeshadow Shades ({len(EYESHADOW_SHADES)}):")
+    for shade, rgb in EYESHADOW_SHADES.items():
+        print(f"   • {shade}: RGB{rgb}")
+    
+    print(f"\n🎭 Foundation Shades ({len(FOUNDATION_SHADES)}):")
+    for shade, rgb in FOUNDATION_SHADES.items():
+        print(f"   • {shade}: RGB{rgb}")
+    
+    print(f"\n📊 Total Shades: {get_total_shades()}")
+    
+    print(f"\n⚙️  Settings:")
+    print(f"   Max Image Size: {MAX_IMAGE_SIZE}")
+    print(f"   Min Image Size: {MIN_IMAGE_SIZE}")
+    print(f"   Default Intensity: {DEFAULT_INTENSITY}%")
+    print(f"   Intensity Range: {MIN_INTENSITY}% - {MAX_INTENSITY}%")
+    
+    print("\n🧪 Testing helper functions...")
+    
+    test_product = "Lipstick"
+    test_shade = "Classic Red"
+    
+    print(f"   Product '{test_product}' valid: {validate_product(test_product)}")
+    print(f"   Shade '{test_shade}' valid: {validate_shade(test_product, test_shade)}")
+    
+    rgb = (255, 0, 0)
+    bgr = rgb_to_bgr(rgb)
+    print(f"   RGB{rgb} → BGR{bgr}")
+    
+    back_to_rgb = bgr_to_rgb(bgr)
+    print(f"   BGR{bgr} → RGB{back_to_rgb}")
+    
+    print("\n" + "=" * 70)
+    print("TEST COMPLETE")
+    print("=" * 70)
