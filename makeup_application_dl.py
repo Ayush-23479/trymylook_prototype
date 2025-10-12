@@ -1,6 +1,7 @@
 """
 Makeup Application Module
 Applies virtual makeup to segmented regions with realistic blending
+UPDATED: Enhanced intensity for more visible results
 """
 
 import cv2
@@ -24,6 +25,8 @@ class NeuralMakeupApplicator:
             result = self._blend_multiply(image, colored_overlay, mask_float, alpha)
         elif blend_mode == 'overlay':
             result = self._blend_overlay(image, colored_overlay, mask_float, alpha)
+        elif blend_mode == 'aggressive':
+            result = self._blend_aggressive(image, colored_overlay, mask_float, alpha)
         else:
             result = self._blend_normal(image, colored_overlay, mask_float, alpha)
         
@@ -40,7 +43,7 @@ class NeuralMakeupApplicator:
         overlay[:, :, 1] = overlay[:, :, 1] * (1 - mask) + g * mask
         overlay[:, :, 2] = overlay[:, :, 2] * (1 - mask) + r * mask
         
-        overlay = overlay * 0.7 + image.astype(np.float32) * 0.3
+        overlay = overlay * 0.3 + image.astype(np.float32) * 0.7
         
         return overlay.astype(np.uint8)
     
@@ -50,7 +53,9 @@ class NeuralMakeupApplicator:
         
         mask_3d = np.stack([mask, mask, mask], axis=2)
         
-        blended = base_float * (1 - alpha * mask_3d) + overlay_float * (alpha * mask_3d)
+        boosted_alpha = np.clip(alpha * 1.2, 0, 1)
+        
+        blended = base_float * (1 - boosted_alpha * mask_3d) + overlay_float * (boosted_alpha * mask_3d)
         
         return np.clip(blended, 0, 255).astype(np.uint8)
     
@@ -59,11 +64,15 @@ class NeuralMakeupApplicator:
         overlay_float = overlay.astype(np.float32) / 255.0
         
         multiplied = base_float * overlay_float
+        multiplied = multiplied * overlay_float
         
         multiplied = (multiplied * 255).astype(np.float32)
         
         mask_3d = np.stack([mask, mask, mask], axis=2)
-        result = base.astype(np.float32) * (1 - alpha * mask_3d) + multiplied * (alpha * mask_3d)
+        
+        boosted_alpha = np.clip(alpha * 1.3, 0, 1)
+        
+        result = base.astype(np.float32) * (1 - boosted_alpha * mask_3d) + multiplied * (boosted_alpha * mask_3d)
         
         return np.clip(result, 0, 255).astype(np.uint8)
     
@@ -80,7 +89,25 @@ class NeuralMakeupApplicator:
         overlayed = (overlayed * 255).astype(np.float32)
         
         mask_3d = np.stack([mask, mask, mask], axis=2)
-        result = base.astype(np.float32) * (1 - alpha * mask_3d) + overlayed * (alpha * mask_3d)
+        
+        boosted_alpha = np.clip(alpha * 1.15, 0, 1)
+        
+        result = base.astype(np.float32) * (1 - boosted_alpha * mask_3d) + overlayed * (boosted_alpha * mask_3d)
+        
+        return np.clip(result, 0, 255).astype(np.uint8)
+    
+    def _blend_aggressive(self, base, overlay, mask, alpha):
+        base_float = base.astype(np.float32) / 255.0
+        overlay_float = overlay.astype(np.float32) / 255.0
+        
+        blended = base_float * overlay_float * overlay_float * overlay_float
+        blended = (blended * 255).astype(np.float32)
+        
+        mask_3d = np.stack([mask, mask, mask], axis=2)
+        
+        boosted_alpha = np.clip(alpha * 1.4, 0, 1)
+        
+        result = base.astype(np.float32) * (1 - boosted_alpha * mask_3d) + blended * (boosted_alpha * mask_3d)
         
         return np.clip(result, 0, 255).astype(np.uint8)
     
@@ -97,10 +124,16 @@ class NeuralMakeupApplicator:
         return np.clip(result, 0, 255).astype(np.uint8)
     
     def apply_lipstick(self, image, mask, color_rgb, intensity):
-        return self.apply_makeup(image, mask, color_rgb, intensity, blend_mode='multiply')
+        if intensity > 60:
+            return self.apply_makeup(image, mask, color_rgb, intensity, blend_mode='aggressive')
+        else:
+            return self.apply_makeup(image, mask, color_rgb, intensity, blend_mode='multiply')
     
     def apply_eyeshadow(self, image, mask, color_rgb, intensity):
-        return self.apply_makeup(image, mask, color_rgb, intensity, blend_mode='multiply')
+        if intensity > 70:
+            return self.apply_makeup(image, mask, color_rgb, intensity, blend_mode='aggressive')
+        else:
+            return self.apply_makeup(image, mask, color_rgb, intensity, blend_mode='multiply')
     
     def apply_foundation(self, image, mask, color_rgb, intensity):
         return self.apply_makeup(image, mask, color_rgb, intensity, blend_mode='overlay')
@@ -222,18 +255,18 @@ if __name__ == "__main__":
     test_mask = np.zeros((480, 640), dtype=np.uint8)
     cv2.circle(test_mask, (320, 240), 50, 255, -1)
     
-    print("\n🎨 Testing makeup application...")
+    print("\n🎨 Testing makeup application with enhanced intensity...")
     
     red_color = (220, 20, 60)
     
     result = applicator.apply_lipstick(test_image, test_mask, red_color, 70)
-    print(f"✅ Lipstick applied: {result.shape}")
+    print(f"✅ Lipstick applied (70% intensity): {result.shape}")
     
     result = applicator.apply_eyeshadow(test_image, test_mask, (139, 90, 60), 60)
-    print(f"✅ Eyeshadow applied: {result.shape}")
+    print(f"✅ Eyeshadow applied (60% intensity): {result.shape}")
     
     result = applicator.apply_foundation(test_image, test_mask, (245, 222, 179), 50)
-    print(f"✅ Foundation applied: {result.shape}")
+    print(f"✅ Foundation applied (50% intensity): {result.shape}")
     
     print("\n✨ Testing blend modes...")
     
@@ -241,10 +274,10 @@ if __name__ == "__main__":
     print(f"   Normal blend: {result_normal.shape}")
     
     result_multiply = applicator.apply_makeup(test_image, test_mask, red_color, 70, 'multiply')
-    print(f"   Multiply blend: {result_multiply.shape}")
+    print(f"   Multiply blend (enhanced): {result_multiply.shape}")
     
-    result_overlay = applicator.apply_makeup(test_image, test_mask, red_color, 70, 'overlay')
-    print(f"   Overlay blend: {result_overlay.shape}")
+    result_aggressive = applicator.apply_makeup(test_image, test_mask, red_color, 80, 'aggressive')
+    print(f"   Aggressive blend (new): {result_aggressive.shape}")
     
     print("\n🌟 Testing enhancement features...")
     
@@ -257,6 +290,12 @@ if __name__ == "__main__":
     textured = applicator.preserve_texture(test_image, result, test_mask, 0.5)
     print(f"✅ Texture preserved: {textured.shape}")
     
+    print("\n💡 Intensity Boost Summary:")
+    print("   Normal blend: +20% intensity boost")
+    print("   Multiply blend: +30% intensity boost + double multiply")
+    print("   Aggressive blend: +40% intensity boost + triple multiply")
+    print("   Overlay blend: +15% intensity boost")
+    
     print("\n" + "=" * 70)
-    print("TEST COMPLETE")
+    print("TEST COMPLETE - ENHANCED INTENSITY VERSION")
     print("=" * 70)
