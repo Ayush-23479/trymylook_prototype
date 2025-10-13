@@ -53,8 +53,17 @@ FOUNDATION_SHADES = {
     "Olive Undertone": (195, 176, 145),
 }
 
+BLUSH_SHADES = {
+    "Rosy Pink": (255, 182, 193),
+    "Peachy Glow": (255, 218, 185),
+    "Coral Blush": (255, 160, 122),
+    "Mauve Rose": (221, 160, 221),
+    "Berry Flush": (219, 112, 147),
+    "Natural Peach": (255, 229, 180),
+}
 
-PRODUCTS = ["Lipstick", "Eyeshadow", "Foundation"]
+
+PRODUCTS = ["Lipstick", "Eyeshadow", "Foundation", "Blush"]
 
 
 CASCADE_FACE = "haarcascade_frontalface_default.xml"
@@ -69,6 +78,8 @@ def get_shades_for_product(product_name):
         return EYESHADOW_SHADES
     elif product_name == "Foundation":
         return FOUNDATION_SHADES
+    elif product_name == "Blush":
+        return BLUSH_SHADES
     else:
         return {}
 
@@ -86,7 +97,7 @@ def get_all_products():
 
 
 def get_total_shades():
-    return len(LIPSTICK_SHADES) + len(EYESHADOW_SHADES) + len(FOUNDATION_SHADES)
+    return len(LIPSTICK_SHADES) + len(EYESHADOW_SHADES) + len(FOUNDATION_SHADES) + len(BLUSH_SHADES)
 
 
 def get_product_info(product_name):
@@ -134,6 +145,10 @@ if __name__ == "__main__":
     for shade, rgb in FOUNDATION_SHADES.items():
         print(f"   • {shade}: RGB{rgb}")
     
+    print(f"\n🌸 Blush Shades ({len(BLUSH_SHADES)}):")
+    for shade, rgb in BLUSH_SHADES.items():
+        print(f"   • {shade}: RGB{rgb}")
+    
     print(f"\n📊 Total Shades: {get_total_shades()}")
     
     print(f"\n⚙️  Settings:")
@@ -144,13 +159,13 @@ if __name__ == "__main__":
     
     print("\n🧪 Testing helper functions...")
     
-    test_product = "Lipstick"
-    test_shade = "Classic Red"
+    test_product = "Blush"
+    test_shade = "Rosy Pink"
     
     print(f"   Product '{test_product}' valid: {validate_product(test_product)}")
     print(f"   Shade '{test_shade}' valid: {validate_shade(test_product, test_shade)}")
     
-    rgb = (255, 0, 0)
+    rgb = (255, 182, 193)
     bgr = rgb_to_bgr(rgb)
     print(f"   RGB{rgb} → BGR{bgr}")
     

@@ -277,6 +277,13 @@ with col2:
                             shade_rgb,
                             intensity
                         )
+                    elif product == "Blush":
+                        processed = applicator.apply_blush(
+                            st.session_state.original_image,
+                            mask,
+                            shade_rgb,
+                            intensity
+                        )
                     else:
                         processed = st.session_state.original_image
                     

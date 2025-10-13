@@ -185,6 +185,57 @@ class NeuralSegmenter:
         
         return expanded
     
+    def create_blush_mask(self, image_shape, landmarks):
+        h, w = image_shape[:2]
+        mask = np.zeros((h, w), dtype=np.uint8)
+        
+        if landmarks is None:
+            return mask
+        
+        if len(landmarks.shape) != 2 or landmarks.shape[0] != 68:
+            return mask
+        
+        nose_bottom = landmarks[33]
+        left_cheek_start = landmarks[3]
+        left_cheek_end = landmarks[4]
+        right_cheek_start = landmarks[13]
+        right_cheek_end = landmarks[12]
+        
+        face_width = np.max(landmarks[:, 0]) - np.min(landmarks[:, 0])
+        
+        left_cheek_center_x = int((left_cheek_start[0] + left_cheek_end[0]) / 2)
+        left_cheek_center_y = int(nose_bottom[1] - face_width * 0.05)
+        
+        right_cheek_center_x = int((right_cheek_start[0] + right_cheek_end[0]) / 2)
+        right_cheek_center_y = int(nose_bottom[1] - face_width * 0.05)
+        
+        cheek_radius_x = int(face_width * 0.12)
+        cheek_radius_y = int(face_width * 0.15)
+        
+        cv2.ellipse(
+            mask,
+            (left_cheek_center_x, left_cheek_center_y),
+            (cheek_radius_x, cheek_radius_y),
+            -15,
+            0, 360,
+            255,
+            -1
+        )
+        
+        cv2.ellipse(
+            mask,
+            (right_cheek_center_x, right_cheek_center_y),
+            (cheek_radius_x, cheek_radius_y),
+            15,
+            0, 360,
+            255,
+            -1
+        )
+        
+        mask = cv2.GaussianBlur(mask, (61, 61), 0)
+        
+        return mask
+    
     def create_mask_for_product(self, image_shape, product_name, landmarks):
         if landmarks is None:
             return np.zeros(image_shape[:2], dtype=np.uint8)
@@ -200,6 +251,9 @@ class NeuralSegmenter:
         
         elif product_name == "Foundation":
             return self.create_skin_mask(image_shape, landmarks)
+        
+        elif product_name == "Blush":
+            return self.create_blush_mask(image_shape, landmarks)
         
         else:
             return np.zeros(image_shape[:2], dtype=np.uint8)
