@@ -1,6 +1,6 @@
 """
 Trymylook Virtual Makeup Try-On
-Main Streamlit Application
+Main Streamlit Application with Complete Look Feature
 """
 
 import streamlit as st
@@ -75,34 +75,54 @@ product = st.sidebar.selectbox(
 shades = get_shades_for_product(product)
 shade_names = list(shades.keys())
 
-selected_shade = st.sidebar.selectbox(
-    "🎨 Select Shade",
-    shade_names,
-    help="Choose the color shade"
-)
+if product == "Complete Look":
+    selected_preset = st.sidebar.selectbox(
+        "🎨 Select Preset Look",
+        shade_names,
+        help="Choose a complete makeup look"
+    )
+    
+    preset_details = shades[selected_preset]
+    
+    st.sidebar.markdown("### 📋 Preset Details:")
+    for makeup_type, (shade, intensity_val) in preset_details.items():
+        st.sidebar.markdown(f"**{makeup_type.title()}:** {shade} ({intensity_val}%)")
+    
+    st.sidebar.markdown("---")
+    
+    selected_shade = selected_preset
+    shade_rgb = (255, 192, 203)
+    
+else:
+    selected_shade = st.sidebar.selectbox(
+        "🎨 Select Shade",
+        shade_names,
+        help="Choose the color shade"
+    )
+    
+    shade_rgb = shades[selected_shade]
+    swatch_html = f"""
+    <div style="
+        background-color: rgb{shade_rgb};
+        width: 100%;
+        height: 50px;
+        border-radius: 8px;
+        border: 2px solid #ddd;
+        margin: 10px 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    "></div>
+    <p style="text-align: center; color: #666; font-size: 0.9em;">{selected_shade}</p>
+    """
+    st.sidebar.markdown(swatch_html, unsafe_allow_html=True)
 
-shade_rgb = shades[selected_shade]
-swatch_html = f"""
-<div style="
-    background-color: rgb{shade_rgb};
-    width: 100%;
-    height: 50px;
-    border-radius: 8px;
-    border: 2px solid #ddd;
-    margin: 10px 0;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-"></div>
-<p style="text-align: center; color: #666; font-size: 0.9em;">{selected_shade}</p>
-"""
-st.sidebar.markdown(swatch_html, unsafe_allow_html=True)
-
-intensity = st.sidebar.slider(
-    "💪 Intensity",
-    min_value=MIN_INTENSITY,
-    max_value=MAX_INTENSITY,
-    value=DEFAULT_INTENSITY,
-    help="Adjust makeup intensity (0 = subtle, 100 = bold)"
-)
+if product != "Complete Look":
+    intensity = st.sidebar.slider(
+        "💪 Intensity",
+        min_value=MIN_INTENSITY,
+        max_value=MAX_INTENSITY,
+        value=DEFAULT_INTENSITY,
+        help="Adjust makeup intensity (0 = subtle, 100 = bold)"
+    )
 
 st.sidebar.markdown("---")
 st.sidebar.subheader("⚙️ Display Options")
@@ -138,7 +158,7 @@ st.sidebar.markdown("""
 st.title(APP_TITLE)
 st.markdown(f"""
 Upload a selfie and apply virtual makeup with adjustable intensity using deep learning.  
-Powered by Face-Alignment Network (97% accuracy) • {len(shade_names)} shades available
+Powered by Face-Alignment Network (97% accuracy) • 5 products • 25+ shades • 5 complete looks
 """)
 
 st.markdown("---")
@@ -210,11 +230,15 @@ with col2:
     
     if st.session_state.original_image is not None:
         
+        if product == "Complete Look":
+            button_text = f"🎨 Apply Complete Look: {selected_preset}"
+        else:
+            button_text = f"🎨 Apply {product}"
+        
         apply_button = st.button(
-            "🎨 Apply Makeup", 
+            button_text, 
             type="primary", 
-            use_container_width=True,
-            help=f"Apply {product} - {selected_shade} at {intensity}% intensity"
+            use_container_width=True
         )
         
         if apply_button:
@@ -245,47 +269,96 @@ with col2:
                     st.session_state.face_data = result
                     
                     progress_bar.progress(33)
-                    status_text.text("Step 2/3: Creating segmentation mask...")
+                    status_text.text("Step 2/3: Creating segmentation masks...")
                     
-                    mask = segmenter.create_mask_for_product(
-                        st.session_state.original_image.shape,
-                        product,
-                        landmarks
-                    )
+                    if product == "Complete Look":
+                        preset = get_shades_for_product("Complete Look")[selected_preset]
+                        processed = st.session_state.original_image.copy()
+                        
+                        progress_bar.progress(50)
+                        
+                        steps = [
+                            ("Foundation", "foundation"),
+                            ("Blush", "blush"),
+                            ("Eyeshadow", "eyeshadow"),
+                            ("Lipstick", "lipstick")
+                        ]
+                        
+                        for idx, (makeup_name, makeup_key) in enumerate(steps):
+                            if makeup_key in preset:
+                                shade_name, makeup_intensity = preset[makeup_key]
+                                
+                                step_progress = 50 + int((idx + 1) / len(steps) * 45)
+                                progress_bar.progress(step_progress)
+                                status_text.text(f"Step 3/3: Applying {makeup_name}... ({idx+1}/{len(steps)})")
+                                
+                                makeup_shades = get_shades_for_product(makeup_name)
+                                if shade_name in makeup_shades:
+                                    makeup_color = makeup_shades[shade_name]
+                                    
+                                    makeup_mask = segmenter.create_mask_for_product(
+                                        processed.shape,
+                                        makeup_name,
+                                        landmarks
+                                    )
+                                    
+                                    if makeup_name == "Lipstick":
+                                        processed = applicator.apply_lipstick(
+                                            processed, makeup_mask, makeup_color, makeup_intensity
+                                        )
+                                    elif makeup_name == "Eyeshadow":
+                                        processed = applicator.apply_eyeshadow(
+                                            processed, makeup_mask, makeup_color, makeup_intensity
+                                        )
+                                    elif makeup_name == "Foundation":
+                                        processed = applicator.apply_foundation(
+                                            processed, makeup_mask, makeup_color, makeup_intensity
+                                        )
+                                    elif makeup_name == "Blush":
+                                        processed = applicator.apply_blush(
+                                            processed, makeup_mask, makeup_color, makeup_intensity
+                                        )
                     
-                    progress_bar.progress(66)
-                    status_text.text(f"Step 3/3: Applying {product}...")
-                    
-                    if product == "Lipstick":
-                        processed = applicator.apply_lipstick(
-                            st.session_state.original_image,
-                            mask,
-                            shade_rgb,
-                            intensity
-                        )
-                    elif product == "Eyeshadow":
-                        processed = applicator.apply_eyeshadow(
-                            st.session_state.original_image,
-                            mask,
-                            shade_rgb,
-                            intensity
-                        )
-                    elif product == "Foundation":
-                        processed = applicator.apply_foundation(
-                            st.session_state.original_image,
-                            mask,
-                            shade_rgb,
-                            intensity
-                        )
-                    elif product == "Blush":
-                        processed = applicator.apply_blush(
-                            st.session_state.original_image,
-                            mask,
-                            shade_rgb,
-                            intensity
-                        )
                     else:
-                        processed = st.session_state.original_image
+                        progress_bar.progress(66)
+                        status_text.text(f"Step 3/3: Applying {product}...")
+                        
+                        mask = segmenter.create_mask_for_product(
+                            st.session_state.original_image.shape,
+                            product,
+                            landmarks
+                        )
+                        
+                        if product == "Lipstick":
+                            processed = applicator.apply_lipstick(
+                                st.session_state.original_image,
+                                mask,
+                                shade_rgb,
+                                intensity
+                            )
+                        elif product == "Eyeshadow":
+                            processed = applicator.apply_eyeshadow(
+                                st.session_state.original_image,
+                                mask,
+                                shade_rgb,
+                                intensity
+                            )
+                        elif product == "Foundation":
+                            processed = applicator.apply_foundation(
+                                st.session_state.original_image,
+                                mask,
+                                shade_rgb,
+                                intensity
+                            )
+                        elif product == "Blush":
+                            processed = applicator.apply_blush(
+                                st.session_state.original_image,
+                                mask,
+                                shade_rgb,
+                                intensity
+                            )
+                        else:
+                            processed = st.session_state.original_image
                     
                     st.session_state.processed_image = processed
                     
@@ -296,7 +369,10 @@ with col2:
                     status_text.empty()
                     progress_bar.empty()
                     
-                    st.success(f"✅ Makeup applied successfully! ({st.session_state.processing_time:.2f}s)")
+                    if product == "Complete Look":
+                        st.success(f"✅ Complete look applied successfully! ({st.session_state.processing_time:.2f}s)")
+                    else:
+                        st.success(f"✅ {product} applied successfully! ({st.session_state.processing_time:.2f}s)")
                     
                 except Exception as e:
                     st.error(f"❌ Error processing image: {str(e)}")
@@ -313,9 +389,14 @@ with col2:
                 )
                 st.image(cv_to_pil(comparison), caption="Before & After Comparison", use_container_width=True)
             else:
+                if product == "Complete Look":
+                    caption_text = f"Complete Look: {selected_preset}"
+                else:
+                    caption_text = f"{product} Applied - {selected_shade} ({intensity}%)"
+                
                 st.image(
                     cv_to_pil(st.session_state.processed_image),
-                    caption=f"{product} Applied - {selected_shade} ({intensity}%)",
+                    caption=caption_text,
                     use_container_width=True
                 )
             
@@ -333,10 +414,15 @@ with col2:
             col_d1, col_d2 = st.columns(2)
             
             with col_d1:
+                if product == "Complete Look":
+                    filename = f"trymylook_complete_{selected_preset.lower().replace(' ', '_').replace('&', 'and')}.png"
+                else:
+                    filename = f"trymylook_{product.lower()}_{selected_shade.lower().replace(' ', '_')}.png"
+                
                 st.download_button(
                     label="📥 Download Result",
                     data=buf.getvalue(),
-                    file_name=f"trymylook_{product.lower()}_{selected_shade.lower().replace(' ', '_')}.png",
+                    file_name=filename,
                     mime="image/png",
                     use_container_width=True
                 )
@@ -348,29 +434,50 @@ with col2:
             
             if st.session_state.face_data:
                 with st.expander("🔍 Detection Details"):
-                    st.json({
+                    details_dict = {
                         "Landmarks Detected": len(st.session_state.landmarks),
                         "Face Center": st.session_state.face_data.get('center'),
                         "Face Angle": f"{st.session_state.face_data.get('angle', 0):.2f}°",
                         "Confidence": st.session_state.face_data.get('confidence', 1.0),
-                        "Product": product,
-                        "Shade": selected_shade,
-                        "Intensity": f"{intensity}%"
-                    })
+                    }
+                    
+                    if product == "Complete Look":
+                        details_dict["Complete Look"] = selected_preset
+                        preset_config = get_shades_for_product("Complete Look")[selected_preset]
+                        for makeup_type, (shade, int_val) in preset_config.items():
+                            details_dict[f"{makeup_type.title()}"] = f"{shade} ({int_val}%)"
+                    else:
+                        details_dict["Product"] = product
+                        details_dict["Shade"] = selected_shade
+                        details_dict["Intensity"] = f"{intensity}%"
+                    
+                    st.json(details_dict)
         
         else:
             st.info("👆 Click 'Apply Makeup' to see the result!")
             
-            st.markdown("""
-            ### 🎨 What happens next?
-            1. **Face Detection**: AI finds your face (97% accuracy)
-            2. **Landmark Detection**: 68 precise points mapped
-            3. **Segmentation**: Perfect masks for lips/eyes/skin
-            4. **Makeup Application**: Realistic blending with texture preservation
-            5. **Result**: Professional-quality virtual makeup!
-            
-            Processing takes 2-3 seconds on CPU, <1 second on GPU.
-            """)
+            if product == "Complete Look":
+                st.markdown("""
+                ### 🎨 Complete Look Feature
+                Apply all 4 makeup products at once with professionally coordinated colors:
+                - **Foundation** - Even base
+                - **Blush** - Natural glow
+                - **Eyeshadow** - Eye enhancement
+                - **Lipstick** - Statement finish
+                
+                Choose from 5 pre-designed looks for different occasions!
+                """)
+            else:
+                st.markdown("""
+                ### 🎨 What happens next?
+                1. **Face Detection**: AI finds your face (97% accuracy)
+                2. **Landmark Detection**: 68 precise points mapped
+                3. **Segmentation**: Perfect masks for lips/eyes/skin/cheeks
+                4. **Makeup Application**: Realistic blending with texture preservation
+                5. **Result**: Professional-quality virtual makeup!
+                
+                Processing takes 2-3 seconds on CPU, <1 second on GPU.
+                """)
     
     else:
         st.info("📸 Upload an image first to see results here")
@@ -379,8 +486,10 @@ with col2:
         ### 🌟 Features
         - **Deep Learning Face Detection** (97% accuracy)
         - **68 Facial Landmarks** for precision
-        - **3 Products**: Lipstick, Eyeshadow, Foundation
-        - **19 Professional Shades**
+        - **4 Individual Products**: Lipstick, Eyeshadow, Foundation, Blush
+        - **Complete Look Feature**: Apply all at once!
+        - **25 Professional Shades**
+        - **5 Complete Look Presets**
         - **Adjustable Intensity** (0-100%)
         - **Before/After Comparison**
         - **Download Results** in high quality
@@ -400,7 +509,7 @@ st.markdown("""
     <p>Powered by Deep Learning • Face-Alignment Network (97% Accuracy)</p>
     <p style="font-size: 0.9em;">Built with Streamlit, PyTorch & OpenCV • Version {}</p>
     <p style="font-size: 0.85em; margin-top: 10px;">
-        For best results: Use well-lit, front-facing photos • Resolution: 640x480 to 1920x1080
+        5 Products • 25 Individual Shades • 5 Complete Looks • For best results: Use well-lit, front-facing photos
     </p>
 </div>
 """.format(VERSION), unsafe_allow_html=True)
@@ -410,6 +519,9 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("### 📊 Statistics")
     st.metric("Total Products", len(PRODUCTS))
-    st.metric("Total Shades", len(shade_names))
+    if product == "Complete Look":
+        st.metric("Preset Selected", selected_preset)
+    else:
+        st.metric("Current Shade", len(shade_names))
     if st.session_state.processing_time:
         st.metric("Last Processing", f"{st.session_state.processing_time:.2f}s")

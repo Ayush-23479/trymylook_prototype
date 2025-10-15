@@ -8,7 +8,7 @@ import numpy as np
 
 APP_TITLE = "✨ Trymylook - Virtual Makeup Try-On"
 APP_ICON = "💄"
-VERSION = "2.0.0"
+VERSION = "2.1.0"
 
 
 MAX_IMAGE_SIZE = (1920, 1920)
@@ -62,8 +62,41 @@ BLUSH_SHADES = {
     "Natural Peach": (255, 229, 180),
 }
 
+COMPLETE_LOOK_PRESETS = {
+    "Natural Glow": {
+        "foundation": ("Light Beige", 50),
+        "blush": ("Peachy Glow", 50),
+        "eyeshadow": ("Neutral Taupe", 40),
+        "lipstick": ("Nude Beige", 60),
+    },
+    "Romantic Rose": {
+        "foundation": ("Fair Porcelain", 45),
+        "blush": ("Rosy Pink", 60),
+        "eyeshadow": ("Purple Haze", 55),
+        "lipstick": ("Pink Bliss", 70),
+    },
+    "Bold & Glamorous": {
+        "foundation": ("Medium Tan", 50),
+        "blush": ("Coral Blush", 65),
+        "eyeshadow": ("Golden Shimmer", 70),
+        "lipstick": ("Classic Red", 80),
+    },
+    "Sultry Evening": {
+        "foundation": ("Deep Caramel", 50),
+        "blush": ("Berry Flush", 60),
+        "eyeshadow": ("Purple Haze", 75),
+        "lipstick": ("Deep Wine", 85),
+    },
+    "Fresh & Peachy": {
+        "foundation": ("Light Beige", 45),
+        "blush": ("Natural Peach", 55),
+        "eyeshadow": ("Warm Brown", 50),
+        "lipstick": ("Coral Pop", 65),
+    },
+}
 
-PRODUCTS = ["Lipstick", "Eyeshadow", "Foundation", "Blush"]
+
+PRODUCTS = ["Lipstick", "Eyeshadow", "Foundation", "Blush", "Complete Look"]
 
 
 CASCADE_FACE = "haarcascade_frontalface_default.xml"
@@ -80,6 +113,8 @@ def get_shades_for_product(product_name):
         return FOUNDATION_SHADES
     elif product_name == "Blush":
         return BLUSH_SHADES
+    elif product_name == "Complete Look":
+        return COMPLETE_LOOK_PRESETS
     else:
         return {}
 
@@ -106,7 +141,7 @@ def get_product_info(product_name):
         'name': product_name,
         'shades': list(shades.keys()),
         'shade_count': len(shades),
-        'colors': list(shades.values())
+        'colors': list(shades.values()) if product_name != "Complete Look" else []
     }
 
 
@@ -131,7 +166,7 @@ if __name__ == "__main__":
     print(f"\n🎨 Available Products: {len(PRODUCTS)}")
     for product in PRODUCTS:
         info = get_product_info(product)
-        print(f"   • {product}: {info['shade_count']} shades")
+        print(f"   • {product}: {info['shade_count']} shades/presets")
     
     print(f"\n💄 Lipstick Shades ({len(LIPSTICK_SHADES)}):")
     for shade, rgb in LIPSTICK_SHADES.items():
@@ -149,7 +184,14 @@ if __name__ == "__main__":
     for shade, rgb in BLUSH_SHADES.items():
         print(f"   • {shade}: RGB{rgb}")
     
-    print(f"\n📊 Total Shades: {get_total_shades()}")
+    print(f"\n✨ Complete Look Presets ({len(COMPLETE_LOOK_PRESETS)}):")
+    for preset_name, preset_config in COMPLETE_LOOK_PRESETS.items():
+        print(f"   • {preset_name}:")
+        for makeup_type, (shade, intensity) in preset_config.items():
+            print(f"     - {makeup_type}: {shade} ({intensity}%)")
+    
+    print(f"\n📊 Total Individual Shades: {get_total_shades()}")
+    print(f"📊 Total Complete Looks: {len(COMPLETE_LOOK_PRESETS)}")
     
     print(f"\n⚙️  Settings:")
     print(f"   Max Image Size: {MAX_IMAGE_SIZE}")
@@ -159,18 +201,11 @@ if __name__ == "__main__":
     
     print("\n🧪 Testing helper functions...")
     
-    test_product = "Blush"
-    test_shade = "Rosy Pink"
+    test_product = "Complete Look"
+    test_shade = "Romantic Rose"
     
     print(f"   Product '{test_product}' valid: {validate_product(test_product)}")
-    print(f"   Shade '{test_shade}' valid: {validate_shade(test_product, test_shade)}")
-    
-    rgb = (255, 182, 193)
-    bgr = rgb_to_bgr(rgb)
-    print(f"   RGB{rgb} → BGR{bgr}")
-    
-    back_to_rgb = bgr_to_rgb(bgr)
-    print(f"   BGR{bgr} → RGB{back_to_rgb}")
+    print(f"   Preset '{test_shade}' valid: {validate_shade(test_product, test_shade)}")
     
     print("\n" + "=" * 70)
     print("TEST COMPLETE")
