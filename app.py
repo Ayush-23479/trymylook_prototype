@@ -1,7 +1,10 @@
 """
 Trymylook Virtual Makeup Try-On
+<<<<<<< HEAD
 Main Streamlit Application - WITH BISENET INTEGRATION
+=======
 Main Streamlit Application with Complete Look Feature
+>>>>>>> 5803f2fa673504d497e546b584ae81ab811fd56d
 """
 
 import streamlit as st
@@ -280,14 +283,57 @@ with col2:
                     st.session_state.landmarks = landmarks
                     st.session_state.face_data = result
                     
+<<<<<<< HEAD
+                    progress_bar.progress(25)
+                    status_text.text("Step 2/4: Running BiSeNet face parsing...")
+                    
+                    # ⭐ CHANGED: Create mask using BiSeNet with the actual image
+                    mask = segmenter.create_mask_for_product(
+                        st.session_state.original_image,  # Pass image, not shape
+                        product,
+                        landmarks  # Fallback if BiSeNet fails
+                    )
+                    
+                    progress_bar.progress(50)
+                    status_text.text("Step 3/4: Refining segmentation mask...")
+                    
+                    # Store for visualization
+                    if hasattr(segmenter, 'bisenet') and segmenter.use_bisenet:
+                        st.session_state.parsing_map = segmenter.bisenet.segment(
+                            st.session_state.original_image
+                        )
+                    
+                    progress_bar.progress(75)
+                    status_text.text(f"Step 4/4: Applying {product}...")
+                    
+                    if product == "Lipstick":
+                        processed = applicator.apply_lipstick(
+                            st.session_state.original_image,
+                            mask,
+                            shade_rgb,
+                            intensity
+                        )
+                    elif product == "Eyeshadow":
+                        processed = applicator.apply_eyeshadow(
+                            st.session_state.original_image,
+                            mask,
+                            shade_rgb,
+                            intensity
+                        )
+                    elif product == "Foundation":
+                        processed = applicator.apply_foundation(
+                            st.session_state.original_image,
+                            mask,
+                            shade_rgb,
+                            intensity
+                        )
+=======
                     progress_bar.progress(33)
                     status_text.text("Step 2/3: Creating segmentation masks...")
                     
                     if product == "Complete Look":
                         preset = get_shades_for_product("Complete Look")[selected_preset]
                         processed = st.session_state.original_image.copy()
-                        
-                        progress_bar.progress(50)
                         
                         steps = [
                             ("Foundation", "foundation"),
@@ -299,22 +345,20 @@ with col2:
                         for idx, (makeup_name, makeup_key) in enumerate(steps):
                             if makeup_key in preset:
                                 shade_name, makeup_intensity = preset[makeup_key]
-                                
                                 step_progress = 50 + int((idx + 1) / len(steps) * 45)
                                 progress_bar.progress(step_progress)
-                                status_text.text(f"Step 3/3: Applying {makeup_name}... ({idx+1}/{len(steps)})")
+                                
+                                status_text.text(f"Step 4/4: Applying {makeup_name}... ({idx+1}/{len(steps)})")
                                 
                                 makeup_shades = get_shades_for_product(makeup_name)
                                 if shade_name in makeup_shades:
                                     makeup_color = makeup_shades[shade_name]
                                     
                                     makeup_mask = segmenter.create_mask_for_product(
-                                  processed,   # ✅ Pass the full image, not just shape
-                                  makeup_name,
-                                landmarks
-)
-
-                                    
+                                        processed.shape,
+                                        makeup_name,
+                                        landmarks
+                                    )
                                     
                                     if makeup_name == "Lipstick":
                                         processed = applicator.apply_lipstick(
@@ -333,12 +377,13 @@ with col2:
                                             processed, makeup_mask, makeup_color, makeup_intensity
                                         )
                     
+>>>>>>> 5803f2fa673504d497e546b584ae81ab811fd56d
                     else:
-                        progress_bar.progress(66)
-                        status_text.text(f"Step 3/3: Applying {product}...")
+                        progress_bar.progress(75)
+                        status_text.text(f"Step 4/4: Applying {product}...")
                         
                         mask = segmenter.create_mask_for_product(
-                            st.session_state.original_image.shape,
+                            st.session_state.original_image,
                             product,
                             landmarks
                         )
@@ -384,9 +429,10 @@ with col2:
                     progress_bar.empty()
                     
                     if product == "Complete Look":
-                        st.success(f"✅ Complete look applied successfully! ({st.session_state.processing_time:.2f}s)")
+                        st.success(f"✅ Complete look applied with BiSeNet! ({st.session_state.processing_time:.2f}s)")
                     else:
                         st.success(f"✅ {product} applied successfully! ({st.session_state.processing_time:.2f}s)")
+>>>>>>> 5803f2fa673504d497e546b584ae81ab811fd56d
                     
                 except Exception as e:
                     st.error(f"❌ Error processing image: {str(e)}")
@@ -465,24 +511,37 @@ with col2:
             
             if st.session_state.face_data:
                 with st.expander("🔍 Detection Details"):
+<<<<<<< HEAD
+                    details = {
+=======
                     details_dict = {
+>>>>>>> 5803f2fa673504d497e546b584ae81ab811fd56d
                         "Landmarks Detected": len(st.session_state.landmarks),
                         "Face Center": st.session_state.face_data.get('center'),
                         "Face Angle": f"{st.session_state.face_data.get('angle', 0):.2f}°",
                         "Confidence": st.session_state.face_data.get('confidence', 1.0),
+<<<<<<< HEAD
+                        "Product": product,
+                        "Shade": selected_shade,
+                        "Intensity": f"{intensity}%",
+                        "Segmentation": "BiSeNet" if (hasattr(segmenter, 'use_bisenet') and segmenter.use_bisenet) else "Landmarks"
+                    }
+                    st.json(details)
+=======
                     }
                     
                     if product == "Complete Look":
-                        details_dict["Complete Look"] = selected_preset
+                        details["Complete Look"] = selected_preset
                         preset_config = get_shades_for_product("Complete Look")[selected_preset]
                         for makeup_type, (shade, int_val) in preset_config.items():
-                            details_dict[f"{makeup_type.title()}"] = f"{shade} ({int_val}%)"
+                            details[f"{makeup_type.title()}"] = f"{shade} ({int_val}%)"
                     else:
-                        details_dict["Product"] = product
-                        details_dict["Shade"] = selected_shade
-                        details_dict["Intensity"] = f"{intensity}%"
+                        details["Product"] = product
+                        details["Shade"] = selected_shade
+                        details["Intensity"] = f"{intensity}%"
                     
                     st.json(details_dict)
+>>>>>>> 5803f2fa673504d497e546b584ae81ab811fd56d
         
         else:
             st.info("👆 Click 'Apply Makeup' to see the result!")

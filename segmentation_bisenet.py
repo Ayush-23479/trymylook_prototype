@@ -173,8 +173,11 @@ class HybridSegmenter:
             print("   Falling back to landmark-based segmentation")
             self.bisenet = None
             self.use_bisenet = False
-
-    def create_mask_for_product(self, image_or_shape, product_name: str, landmarks=None) -> np.ndarray:
+            from segmentation_dl import NeuralSegmenter
+            self.fallback_segmenter = NeuralSegmenter()
+    
+    def create_mask_for_product(self, image_or_shape, product_name: str, 
+                                landmarks=None) -> np.ndarray:
         """
         Create mask using BiSeNet if available, otherwise use landmarks.
         """
@@ -212,18 +215,25 @@ if __name__ == "__main__":
 
     try:
         segmenter = BiSeNetSegmenter(device='cpu')
+        
+        # Create test image
         test_image = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
+        
+        print("\n🔍 Testing segmentation...")
         parsing = segmenter.segment(test_image)
-        print(f"✅ Parsing map created: {parsing.shape}, unique classes: {np.unique(parsing)}")
-
+        print(f"✅ Parsing map created: {parsing.shape}")
+        print(f"   Unique classes: {np.unique(parsing)}")
+        
+        print("\n🎨 Testing mask creation...")
         for product in ["Foundation", "Lipstick", "Eyeshadow"]:
             mask = segmenter.create_mask_for_product(test_image, product)
-            print(f"   {product}: {np.count_nonzero(mask)} active pixels")
-
-        print("✅ BiSeNet test completed successfully!")
-
+            non_zero = np.count_nonzero(mask)
+            print(f"   {product}: {mask.shape}, {non_zero} active pixels")
+        
+        print("\n✅ BiSeNet test completed successfully!")
+        
     except Exception as e:
-        print(f"❌ BiSeNet test failed: {e}")
+        print(f"\n❌ BiSeNet test failed: {e}")
         print("   Make sure face-parsing.PyTorch is properly set up")
-
-    print("=" * 70)
+    
+    print("\n" + "=" * 70)
