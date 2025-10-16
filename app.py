@@ -1,10 +1,7 @@
 """
 Trymylook Virtual Makeup Try-On
-<<<<<<< HEAD
 Main Streamlit Application - WITH BISENET INTEGRATION
-=======
 Main Streamlit Application with Complete Look Feature
->>>>>>> 5803f2fa673504d497e546b584ae81ab811fd56d
 """
 
 import streamlit as st
@@ -172,11 +169,7 @@ st.sidebar.markdown("""
 st.title(APP_TITLE)
 st.markdown(f"""
 Upload a selfie and apply virtual makeup with adjustable intensity using deep learning.  
-<<<<<<< HEAD
 Powered by **BiSeNet Face Parsing** + Face-Alignment Network • {len(shade_names)} shades available
-=======
-Powered by Face-Alignment Network (97% accuracy) • 5 products • 25+ shades • 5 complete looks
->>>>>>> 5803f2fa673504d497e546b584ae81ab811fd56d
 """)
 
 st.markdown("---")
@@ -287,51 +280,6 @@ with col2:
                     st.session_state.landmarks = landmarks
                     st.session_state.face_data = result
                     
-<<<<<<< HEAD
-                    progress_bar.progress(25)
-                    status_text.text("Step 2/4: Running BiSeNet face parsing...")
-                    
-                    # ⭐ CHANGED: Create mask using BiSeNet with the actual image
-                    mask = segmenter.create_mask_for_product(
-                        st.session_state.original_image,  # Pass image, not shape
-                        product,
-                        landmarks  # Fallback if BiSeNet fails
-                    )
-                    
-                    progress_bar.progress(50)
-                    status_text.text("Step 3/4: Refining segmentation mask...")
-                    
-                    # Store for visualization
-                    if hasattr(segmenter, 'bisenet') and segmenter.use_bisenet:
-                        st.session_state.parsing_map = segmenter.bisenet.segment(
-                            st.session_state.original_image
-                        )
-                    
-                    progress_bar.progress(75)
-                    status_text.text(f"Step 4/4: Applying {product}...")
-                    
-                    if product == "Lipstick":
-                        processed = applicator.apply_lipstick(
-                            st.session_state.original_image,
-                            mask,
-                            shade_rgb,
-                            intensity
-                        )
-                    elif product == "Eyeshadow":
-                        processed = applicator.apply_eyeshadow(
-                            st.session_state.original_image,
-                            mask,
-                            shade_rgb,
-                            intensity
-                        )
-                    elif product == "Foundation":
-                        processed = applicator.apply_foundation(
-                            st.session_state.original_image,
-                            mask,
-                            shade_rgb,
-                            intensity
-                        )
-=======
                     progress_bar.progress(33)
                     status_text.text("Step 2/3: Creating segmentation masks...")
                     
@@ -361,10 +309,12 @@ with col2:
                                     makeup_color = makeup_shades[shade_name]
                                     
                                     makeup_mask = segmenter.create_mask_for_product(
-                                        processed.shape,
-                                        makeup_name,
-                                        landmarks
-                                    )
+                                  processed,   # ✅ Pass the full image, not just shape
+                                  makeup_name,
+                                landmarks
+)
+
+                                    
                                     
                                     if makeup_name == "Lipstick":
                                         processed = applicator.apply_lipstick(
@@ -383,7 +333,6 @@ with col2:
                                             processed, makeup_mask, makeup_color, makeup_intensity
                                         )
                     
->>>>>>> 5803f2fa673504d497e546b584ae81ab811fd56d
                     else:
                         progress_bar.progress(66)
                         status_text.text(f"Step 3/3: Applying {product}...")
@@ -434,14 +383,10 @@ with col2:
                     status_text.empty()
                     progress_bar.empty()
                     
-<<<<<<< HEAD
-                    st.success(f"✅ Makeup applied with BiSeNet! ({st.session_state.processing_time:.2f}s)")
-=======
                     if product == "Complete Look":
                         st.success(f"✅ Complete look applied successfully! ({st.session_state.processing_time:.2f}s)")
                     else:
                         st.success(f"✅ {product} applied successfully! ({st.session_state.processing_time:.2f}s)")
->>>>>>> 5803f2fa673504d497e546b584ae81ab811fd56d
                     
                 except Exception as e:
                     st.error(f"❌ Error processing image: {str(e)}")
@@ -468,14 +413,16 @@ with col2:
                     caption=caption_text,
                     use_container_width=True
                 )
-            
+            # ----------------------------------------------------------------
+
             # ⭐ NEW: Show BiSeNet parsing visualization
             if show_parsing_viz and st.session_state.parsing_map is not None:
                 st.subheader("🔬 BiSeNet Face Parsing")
                 if hasattr(segmenter, 'bisenet'):
                     parsing_viz = segmenter.bisenet.visualize_parsing(st.session_state.parsing_map)
                     st.image(cv_to_pil(parsing_viz), caption="BiSeNet Segmentation Map", use_container_width=True)
-            
+            # ---------------------------------------------------------
+
             if show_processing_time and st.session_state.processing_time:
                 col_m1, col_m2 = st.columns(2)
                 with col_m1:
@@ -518,23 +465,11 @@ with col2:
             
             if st.session_state.face_data:
                 with st.expander("🔍 Detection Details"):
-<<<<<<< HEAD
-                    details = {
-=======
                     details_dict = {
->>>>>>> 5803f2fa673504d497e546b584ae81ab811fd56d
                         "Landmarks Detected": len(st.session_state.landmarks),
                         "Face Center": st.session_state.face_data.get('center'),
                         "Face Angle": f"{st.session_state.face_data.get('angle', 0):.2f}°",
                         "Confidence": st.session_state.face_data.get('confidence', 1.0),
-<<<<<<< HEAD
-                        "Product": product,
-                        "Shade": selected_shade,
-                        "Intensity": f"{intensity}%",
-                        "Segmentation": "BiSeNet" if (hasattr(segmenter, 'use_bisenet') and segmenter.use_bisenet) else "Landmarks"
-                    }
-                    st.json(details)
-=======
                     }
                     
                     if product == "Complete Look":
@@ -548,23 +483,10 @@ with col2:
                         details_dict["Intensity"] = f"{intensity}%"
                     
                     st.json(details_dict)
->>>>>>> 5803f2fa673504d497e546b584ae81ab811fd56d
         
         else:
             st.info("👆 Click 'Apply Makeup' to see the result!")
             
-<<<<<<< HEAD
-            st.markdown("""
-            ### 🎨 What happens next?
-            1. **Face Detection**: AI finds your face (97% accuracy)
-            2. **BiSeNet Parsing**: 19-class semantic segmentation
-            3. **Mask Creation**: Pixel-perfect regions for makeup
-            4. **Makeup Application**: Realistic blending with texture preservation
-            5. **Result**: Professional-quality virtual makeup!
-            
-            Processing takes 2-4 seconds with BiSeNet on CPU, <1 second on GPU.
-            """)
-=======
             if product == "Complete Look":
                 st.markdown("""
                 ### 🎨 Complete Look Feature
@@ -587,7 +509,6 @@ with col2:
                 
                 Processing takes 2-3 seconds on CPU, <1 second on GPU.
                 """)
->>>>>>> 5803f2fa673504d497e546b584ae81ab811fd56d
     
     else:
         st.info("📸 Upload an image first to see results here")
