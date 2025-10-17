@@ -75,7 +75,7 @@ def test_custom_modules():
         from face_detection import FaceDetector
         print("  ✓ face_detection.py imported")
         
-        from segmentation_dl import MakeupSegmenter
+        from segmentation import MakeupSegmenter
         print("  ✓ segmentation.py imported")
         
         from makeup_application import MakeupApplicator
@@ -119,7 +119,7 @@ def test_segmentation():
     print("\nTesting segmentation...")
     try:
         import numpy as np
-        from segmentation_dl import MakeupSegmenter
+        from segmentation import MakeupSegmenter
         
         segmenter = MakeupSegmenter()
         print("  ✓ MakeupSegmenter initialized")
