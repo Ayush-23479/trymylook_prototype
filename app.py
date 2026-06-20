@@ -11,16 +11,16 @@ from PIL import Image
 import io
 import time
 
-from config import (
-    APP_TITLE, APP_ICON, VERSION, 
-    PRODUCTS, get_shades_for_product, 
+from trymylook.config import (
+    APP_TITLE, APP_ICON, VERSION,
+    PRODUCTS, get_shades_for_product,
     DEFAULT_INTENSITY, MIN_INTENSITY, MAX_INTENSITY,
     MAX_IMAGE_SIZE, MIN_IMAGE_SIZE
 )
-from face_detection_dl import DeepLearningFaceDetector
-from segmentation import HybridSegmenter  # ✅ Changed to unified module
-from makeup_application_dl import NeuralMakeupApplicator
-from utils import (
+from trymylook.face_detection import DeepLearningFaceDetector
+from trymylook.segmentation import HybridSegmenter
+from trymylook.makeup_application import NeuralMakeupApplicator
+from trymylook.utils import (
     pil_to_cv, cv_to_pil, resize_image, ensure_min_size,
     create_side_by_side, validate_image, get_image_info
 )

@@ -15,7 +15,11 @@ import os
 # ===================================================================
 
 # Add face-parsing.PyTorch to path
-FACE_PARSING_PATH = os.path.join(os.path.dirname(__file__), 'face-parsing.PyTorch')
+# Layout: <root>/src/trymylook/segmentation.py -> <root>/models/face-parsing.PyTorch
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+FACE_PARSING_PATH = os.path.join(PROJECT_ROOT, 'models', 'face-parsing.PyTorch')
+DEFAULT_BISENET_WEIGHTS = os.path.join(FACE_PARSING_PATH, 'res', 'cp', '79999_iter.pth')
+
 if FACE_PARSING_PATH not in sys.path:
     sys.path.insert(0, FACE_PARSING_PATH)
 
@@ -262,7 +266,7 @@ if BISENET_AVAILABLE:
             'hair': 17,
         }
 
-        def __init__(self, model_path: str = 'face-parsing.PyTorch/res/cp/79999_iter.pth',
+        def __init__(self, model_path: str = DEFAULT_BISENET_WEIGHTS,
                      device: str = 'cpu'):
             print("🔮 Initializing BiSeNet Face Parser...")
             print(f"   Device: {device.upper()}")
@@ -418,7 +422,7 @@ class HybridSegmenter:
     ✅ ONE CLASS TO RULE THEM ALL
     """
 
-    def __init__(self, model_path: str = 'face-parsing.PyTorch/res/cp/79999_iter.pth',
+    def __init__(self, model_path: str = DEFAULT_BISENET_WEIGHTS,
                  device: str = 'cpu'):
         print("🔮 Initializing Unified Hybrid Segmenter...")
         
