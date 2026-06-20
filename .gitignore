@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+venv/
+env/
+.venv/
+.env
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Model weights / large files (download separately, don't commit)
+*.pth
+*.onnx
+*.pt
+face-parsing.PyTorch/res/cp/*.pth
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+.vscode/
+*.swp
+
+# Logs
+*.log
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
